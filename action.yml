@@ -1,0 +1,35 @@
+name: Build Raspberry Pi Pico project with CMake
+
+inputs:
+  build-type:
+    required: true
+    default: Release
+
+runs:
+  using: composite
+
+  steps:
+    - name: Checkout pico-sdk
+      uses: actions/checkout@v4
+      with:
+        repository: raspberrypi/pico-sdk
+        path: pico-sdk
+
+    - name: Checkout pico-sdk submodules
+      working-directory: ${{github.workspace}}/pico-sdk
+      shell: bash
+      run: git submodule update --init
+
+    - name: Install Arm GNU Toolchain
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install gcc-arm-none-eabi libnewlib-arm-none-eabi
+
+    - name: Configure CMake
+      shell: bash
+      run: PICO_SDK_PATH=${{github.workspace}}/pico-sdk cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{inputs.build-type}}
+
+    - name: Build
+      shell: bash
+      run: cmake --build ${{github.workspace}}/build --config ${{inputs.build-type}}
